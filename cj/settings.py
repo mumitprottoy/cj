@@ -1,3 +1,5 @@
+import os
+from cjcreds import creds
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -13,7 +15,7 @@ SECRET_KEY = 'django-insecure-=$w7mvsybo@-24ej1t9hubumim!pfk_$hs=fa3e1bkx)%0bmw!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -62,8 +64,13 @@ WSGI_APPLICATION = 'cj.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': creds.DB_NAME,
+        'HOST': creds.DB_HOST,
+        'PORT': creds.DB_PORT,
+        'USER': creds.DB_USER,
+        'PASSWORD': creds.DB_PASSWORD,
+        'OPTIONS': creds.DB_OPTIONS
     }
 }
 
