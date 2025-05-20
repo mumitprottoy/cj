@@ -1,0 +1,1 @@
+PROJECT_SECRET_KET = 'django-insecure-=$w7mvsybo@-24ej1t9hubumim!pfk_$hs=fa3e1bkx)%0bmw!'
