@@ -85,15 +85,7 @@ WSGI_APPLICATION = 'cj.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': creds.POSTGRES_DB_ENGINE,
-        'NAME': creds.POSTGRES_DB_NAME,
-        'HOST': creds.POSTGRES_DB_HOST,
-        'PORT': creds.POSTGRES_DB_PORT,
-        'USER': creds.POSTGRES_DB_USER,
-        'PASSWORD': creds.POSTGRES_DB_PASSWORD,
-        # 'OPTIONS': creds.DB_OPTIONS
-    }
+    'default': creds.POSTGRES_DB_SETUP
 }
 
 REST_USE_JWT = True
