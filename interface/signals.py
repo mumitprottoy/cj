@@ -5,12 +5,11 @@ from django.contrib.auth.models import User
 from profiles import models as profile_models, engine
 
 
-@receiver(pre_save, sender=User)
-def add_unique_username(instance: User, *args, **kwargs) -> None:
-    user = instance
-    if not user.is_superuser:
-        user.username = engine.UserHandler.create_unique_username(
-            f"{user.first_name} {user.last_name}")
+# @receiver(pre_save, sender=User)
+# def add_unique_username(instance: User, *args, **kwargs) -> None:
+#     user = instance
+#     user.username = engine.UserHandler.create_unique_username(
+#         f"{user.first_name} {user.last_name}")
 
 
 @receiver(post_save, sender=User)

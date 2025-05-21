@@ -86,13 +86,13 @@ WSGI_APPLICATION = 'cj.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': creds.DB_NAME,
-        'HOST': creds.DB_HOST,
-        'PORT': creds.DB_PORT,
-        'USER': creds.DB_USER,
-        'PASSWORD': creds.DB_PASSWORD,
-        'OPTIONS': creds.DB_OPTIONS
+        'ENGINE': creds.POSTGRES_DB_ENGINE,
+        'NAME': creds.POSTGRES_DB_NAME,
+        'HOST': creds.POSTGRES_DB_HOST,
+        'PORT': creds.POSTGRES_DB_PORT,
+        'USER': creds.POSTGRES_DB_USER,
+        'PASSWORD': creds.POSTGRES_DB_PASSWORD,
+        # 'OPTIONS': creds.DB_OPTIONS
     }
 }
 

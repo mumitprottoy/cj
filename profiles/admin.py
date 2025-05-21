@@ -6,5 +6,6 @@ admin.site.register([
     models.City,
     models.BirthDate,
     models.Address,
-    models.AuthCode
+    models.AuthCode,
+    models.Pic
 ])

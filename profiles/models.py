@@ -56,8 +56,6 @@ class BirthDate(models.Model):
 class Address(models.Model):
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name='address', null=True, blank=True, default=None)
-    country = models.ForeignKey(
-        Country, on_delete=models.CASCADE, null=True, blank=True, default=None)
     city = models.ForeignKey(
         City, on_delete=models.CASCADE, null=True, blank=True, default=None)
     post_code = models.CharField(max_length=15, null=True, blank=True, default='')
