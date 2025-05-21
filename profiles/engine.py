@@ -3,9 +3,11 @@ from . import models
 
 
 class UserHandler:
-    REGEX = "^[A-Za-z]+(?: [A-Za-z]+)+$"
-    NAME_MESSAGE = 'Name should only contain and start with alphabets (A-Z & a-z) separated by spaces.'
-    EMAIL_MESSAGE = 'Email already exists.'
+    NAME_REGEX = r"^[A-Za-z]+(?: [A-Za-z]+)+$"
+    EMAIL_REGEX = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+    NAME_MESSAGE = 'Name should have at least two parts, can only contain and start with alphabets (A-Z & a-z) separated by spaces.'
+    DUPLICATE_EMAIL_MESSAGE = 'Email already exists.'
+    INVALID_EMAIL_MESSAGE = 'Invalid email syntax.'
     PASSWORD_MESSAGE = 'Password must contain at least 8 charcaters.'
 
     def __init__(self, name: str, email: str, password: str, is_superuser: bool=False) -> None:
@@ -13,7 +15,7 @@ class UserHandler:
         self.email = email
         self.password = password
         self.is_superuser = is_superuser
-        self.error_messages = dict()
+        self.error_messages = list()
     
     def clean_name(self) -> str:
         name = ' '.join([part.strip() for part in self.name.split()])
@@ -25,22 +27,29 @@ class UserHandler:
         return self.name.split()[0], ' '.join(self.name.split()[1:])
     
     def validate_name(self) -> bool: 
-        valid = re.match(self.REGEX, self.name)
-        if not valid: self.error_messages['Name'] = self.NAME_MESSAGE
-        return valid
+        is_valid = re.match(self.NAME_REGEX, self.name)
+        if not is_valid: self.error_messages.append(self.NAME_MESSAGE)
+        return is_valid
         
     def validate_email(self) -> bool:
-        valid = not models.User.objects.filter(email=self.email).exists()
-        if not valid: self.error_messages['Email'] = self.EMAIL_MESSAGE
-        return valid
+        is_unique = not models.User.objects.filter(email=self.email).exists()
+        is_valid = re.match(self.EMAIL_REGEX, self.email)
+        if not is_unique: self.error_messages.append(self.DUPLICATE_EMAIL_MESSAGE)
+        if not is_valid: self.error_messages.append(self.INVALID_EMAIL_MESSAGE)
+        return is_unique and is_valid
     
     def validate_password(self) -> bool:
-        valid = self.password.__len__() >= 8
-        if not valid: self.error_messages['Password'] = self.PASSWORD_MESSAGE
-        return valid
+        is_valid = self.password.__len__() >= 8
+        if not is_valid: self.error_messages.append(self.PASSWORD_MESSAGE)
+        return is_valid
     
     def validate_data(self) -> bool:
-        return self.validate_name() and self.validate_email() and self.validate_password()
+        x,y,z = self.validate_name(), self.validate_email(), self.validate_password()
+        return x and y and z
+    
+    @property
+    def errors(self) -> list:
+        return list(set(self.error_messages))
     
     @classmethod
     def create_unique_username(cls, full_name: str, delimiter: str='.') -> str: 
@@ -65,7 +74,7 @@ class UserHandler:
                 username=self.create_unique_username(f'{first_name} {last_name}'),
                 email=self.email,
                 is_superuser=self.is_superuser,
-                is_staff=self.is_superuser,
+                is_staff=self.is_superuser
             )
     
     def setup_user(self) -> models.User:
@@ -76,7 +85,7 @@ class UserHandler:
                 user.set_password(self.password); user.save()
                 print('Created user.')
                 print(user.__dict__)
-                return user
+                return user, dict(user_id=user.id)
             print('User already exists.')
         else: print('errors:', self.error_messages)
         
