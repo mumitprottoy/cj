@@ -5,7 +5,7 @@ from utils import constants as const, keygen
 
 
 class Country(models.Model):
-    name = models.CharField(max_length=30, unique=True)
+    name = models.CharField(max_length=100, unique=True)
     
     class Meta:
         verbose_name_plural = 'Countries'
@@ -15,7 +15,7 @@ class Country(models.Model):
 
 
 class City(models.Model):
-    name = models.CharField(max_length=30, unique=True)
+    name = models.CharField(max_length=100)
     country = models.ForeignKey(Country, on_delete=models.CASCADE, related_name='cities')
     
     class Meta:

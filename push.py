@@ -5,8 +5,10 @@ command = lambda cmd: cmd
 
 subprocess.run(command('pip freeze > requirements.txt'), shell=True)
 print('requiremnts.txt file is updated.')
-subprocess.run(command('python manage.py dumpdata > data.json'), shell=True)
-print('data.json file is updated.')
+# subprocess.run('chcp 65001', shell=True)
+# file = open('data.json', 'w', encoding='utf-8'); file.close()
+# subprocess.run(command('python manage.py dumpdata > data.json'), shell=True)
+# print('data.json file is updated.')
 subprocess.run(command('git init'), shell=True)
 print('git initiated...')
 subprocess.run(command('git add .'), shell=True)
