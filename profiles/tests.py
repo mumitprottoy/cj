@@ -1,2 +1,4 @@
 from django.test import TestCase
-from . import operations as ops, models
+
+from .. import add_cities as ops
+from . import models
