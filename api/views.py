@@ -82,5 +82,6 @@ class ProfileAPI(views.APIView):
         profile = profile_engine.ProfileEngine(user)
         return Response(
             profile_engine.ProfileEngine.__dict__[data_type].fget(profile), status=status.HTTP_200_OK)
-    
-            
+
+
+class VerifyEmailAPI(views.APIView): pass
