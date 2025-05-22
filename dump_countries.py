@@ -4,7 +4,7 @@ from profiles.models import Country
 
 
 def main():
-    countries = json.dumps([c.name for c in Country.objects.all()], indent=4)
+    countries = json.dumps(sorted([c.name for c in Country.objects.all()]), indent=4)
     file = open('countries.json', 'w', encoding='utf-8')
     file.write(countries); file.close()
 

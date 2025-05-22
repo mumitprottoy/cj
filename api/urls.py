@@ -8,4 +8,7 @@ urlpatterns = [
     path('user/token-lifetime', views.TokenLifetimeAPI.as_view()),
     path('user/refresh-token', views.RefreshTokenAPI.as_view()),
     path('user/profile/<str:data_type>', views.ProfileAPI.as_view()),
+    path('user/verify-email', views.EmailVerificationAPI.as_view()),
+    path('user/verify-otp', views.OTPVerificationAPI.as_view()),
+    path('user/change-password', views.PwdChangeAPI.as_view()),
 ]

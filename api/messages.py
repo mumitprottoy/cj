@@ -1,2 +1,7 @@
 REFRESH_TOKEN_NOT_PROVIDED = 'Refresh token not provided.'
 INVALID_REFRESH_TOKEN = 'Invalid refresh token.'
+EMAIL_VERIFIED = 'Email has been successfully verified.'
+OTP_VERIFIED = 'OTP has been successfully verified.'
+INVALID_CODE = 'Invalid code.'
+ALREADY_LOGGED_IN = 'User already logged in.'
+PWD_CHANGE_SUCCESS = 'Password has been successfully changed.'

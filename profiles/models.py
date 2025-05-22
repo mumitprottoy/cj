@@ -91,15 +91,16 @@ class AuthCode(models.Model):
         self.verification_code = self.__generate_code()
         self.save()
     
-    # def send_otp(self):
-    #     self.change_otp()
-    #     self.send_code('OTP')
+    def send_otp(self):
+        self.change_otp()
+        # self.send_code('OTP')
     
-    # def send_verification_code(self):
-    #     self.change_verification_code()
-    #     self.send_code('verification code')
+    def send_verification_code(self):
+        self.change_verification_code()
+        # self.send_code('verification code')
     
-    def verify_auth_code(self,code_type: str, code: str) -> bool:
+    def verify_auth_code(self, code_type: str, code: str) -> bool:
+        print(f'verifying: {self.__dict__[code_type]} == {code}')
         return self.__dict__[code_type] == code
         
     def verify_email(self, code: str) -> bool:
@@ -108,6 +109,23 @@ class AuthCode(models.Model):
             return True
         return False
     
+    def verify_otp(self, code: str) -> bool:
+        return self.verify_auth_code('otp', code)
+    
+    @classmethod
+    def verify_email_before_login(cls, email: str, code: str) -> bool:
+        user = User.objects.filter(email=email).first()
+        if user is not None:
+            return user.codes.verify_email(code)
+        return False
+    
+    @classmethod
+    def verify_otp_before_login(cls, email: str, code: str) -> bool:
+        user = User.objects.filter(email=email).first()
+        if user is not None:
+            return user.codes.verify_otp(code)
+        return False
+
     def save(self, *args, **kwargs):
         if not self.otp:
             self.otp = self.__generate_code()

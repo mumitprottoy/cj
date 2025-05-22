@@ -52,3 +52,4 @@ def add_pics(instance: User, created: bool, *args, **kwargs) -> None:
             profile_pic_url=pp_url,
             cover_pic_url=cp_url,
         )
+

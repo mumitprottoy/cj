@@ -1,10 +1,11 @@
+from django.contrib.auth.models import User
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import views, status, permissions
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from profiles import models as profile_models, engine as profile_engine
 from entrance import engine as auth_engine
-from . import lifetime, messages as msg
+from . import lifetime, messages as msg, tokens
 
 
 class RegisterAPI(views.APIView):
@@ -15,7 +16,7 @@ class RegisterAPI(views.APIView):
         if is_valid:
             user, _ = handler.setup_user()
             profile = profile_engine.ProfileEngine(user)
-            return Response(profile.primary_data, status=status.HTTP_201_CREATED)
+            return Response(profile.primary, status=status.HTTP_200_OK)
         return Response(dict(errors=handler.errors), status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -25,18 +26,12 @@ class LoginAPI(views.APIView):
         handler = auth_engine.AuthHandler()
         user = handler.authenticate_with_email(**request.data)
         if user is not None:
-            token_bearer = RefreshToken.for_user(user)
-            access_token = str(token_bearer.access_token)
-            refresh_token = str(token_bearer)
-            access_token_lifetime_remaining = lifetime.get_token_lifetime_remaining_days(access_token)
-            refresh_token_lifetime_remaining = lifetime.get_token_lifetime_remaining_days(refresh_token)
-            return Response(dict(
-                user_id = user.id,
-                access_token = access_token,
-                refresh_token = refresh_token,
-                access_token_lifetime_remaining = access_token_lifetime_remaining,
-                refresh_token_lifetime_remaining = refresh_token_lifetime_remaining
-            ), status=status.HTTP_200_OK)
+            token_handler = tokens.TokenHandler()
+            token_data = token_handler.get_token_data_by_user(user)
+            token_data['user_id'] = user.id
+            profile = profile_engine.ProfileEngine(user)
+            token_data['has_addr_data'] = profile.has_addr_data
+            return Response(token_data, status=status.HTTP_200_OK)
         return Response(dict(errors=handler.errors), status=status.HTTP_401_UNAUTHORIZED)
     
 
@@ -58,18 +53,10 @@ class RefreshTokenAPI(views.APIView):
             return Response(dict(errors=[msg.REFRESH_TOKEN_NOT_PROVIDED]), status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            token_bearer = RefreshToken(refresh_token)
-            access_token = str(token_bearer.access_token)
-            refresh_token = str(token_bearer)
-            access_token_lifetime_remaining = lifetime.get_token_lifetime_remaining_days(access_token)
-            refresh_token_lifetime_remaining = lifetime.get_token_lifetime_remaining_days(refresh_token)
-            return Response(dict(
-                user_id = request.user.id,
-                access_token = access_token,
-                refresh_token = refresh_token,
-                access_token_lifetime_remaining = access_token_lifetime_remaining,
-                refresh_token_lifetime_remaining = refresh_token_lifetime_remaining
-            ), status=status.HTTP_200_OK)
+            token_handler = tokens.TokenHandler()
+            token_data = token_handler.get_token_data_by_refresh_token(refresh_token)
+            token_data['user_id'] = request.user.id
+            return Response(token_data, status=status.HTTP_200_OK)
         except TokenError as e:
             return Response(dict(errors=[msg.INVALID_REFRESH_TOKEN]), status=status.HTTP_401_UNAUTHORIZED)
         
@@ -82,6 +69,48 @@ class ProfileAPI(views.APIView):
         profile = profile_engine.ProfileEngine(user)
         return Response(
             profile_engine.ProfileEngine.__dict__[data_type].fget(profile), status=status.HTTP_200_OK)
+        
+
+class EmailVerificationAPI(views.APIView):
+    
+    def post(self, request: Request) -> Response:
+        if not request.user.is_authenticated: 
+            if profile_models.AuthCode.verify_email_before_login(**request.data):
+               return Response(dict(message=msg.EMAIL_VERIFIED), status=status.HTTP_200_OK)
+            return Response(dict(errors=[msg.INVALID_CODE]), status=status.HTTP_401_UNAUTHORIZED) 
+        return Response(dict(errors=[msg.ALREADY_LOGGED_IN]), status=status.HTTP_400_BAD_REQUEST)
 
 
-class VerifyEmailAPI(views.APIView): pass
+class OTPVerificationAPI(views.APIView):
+    
+    def post(self, request: Request) -> Response:
+        if not request.user.is_authenticated: 
+            if profile_models.AuthCode.verify_email_before_login(**request.data):
+                user = User.objects.get(email=request.data.get('email'))
+                profile = profile_engine.ProfileEngine(user)
+                response = dict(user_id=user.id, message=msg.OTP_VERIFIED, has_addr_data=profile.has_addr_data)
+                tokens_handler = tokens.TokenHandler()
+                token_data = tokens_handler.get_token_data_by_user(user)
+                response.update(token_data)
+                return Response(response, status=status.HTTP_200_OK)
+            return Response(dict(errors=[msg.INVALID_CODE]), status=status.HTTP_401_UNAUTHORIZED) 
+        return Response(dict(errors=[msg.ALREADY_LOGGED_IN]), status=status.HTTP_400_BAD_REQUEST)
+
+
+class PwdChangeAPI(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request: Request) -> Response:
+        password = request.data.get('password')
+        confirm_password = request.data.get('confirm_password')
+        handler = auth_engine.AuthHandler()
+        is_valid = handler.validate_password(password, confirm_password)
+        if is_valid:
+            request.user.set_password(password)
+            request.user.save()
+            return Response(dict(message=msg.PWD_CHANGE_SUCCESS), status=status.HTTP_200_OK)
+        return Response(dict(errors=handler.errors), status=status.HTTP_400_BAD_REQUEST)
+            
+
+        
+        

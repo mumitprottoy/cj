@@ -88,6 +88,7 @@ class UserHandler:
                 user.set_password(self.password); user.save()
                 print('Created user.')
                 print(user.__dict__)
+                # user.codes.send_verification_code()
                 return user, dict(user_id=user.id)
             print('User already exists.')
         else: print('errors:', self.error_messages)
@@ -140,6 +141,12 @@ class ProfileEngine:
             post_code=self.user.address.post_code,
             details=self.user.address.details,
         )
+    
+    @property
+    def has_addr_data(self) -> bool:
+        addr = self.address
+        values = [bool(v) for v in list(addr.values())]
+        return sum(values) == values.__len__()
     
     @property
     def details(self) -> dict:
