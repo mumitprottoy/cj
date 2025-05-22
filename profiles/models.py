@@ -98,10 +98,15 @@ class AuthCode(models.Model):
     # def send_verification_code(self):
     #     self.change_verification_code()
     #     self.send_code('verification code')
+    
+    def verify_auth_code(self,code_type: str, code: str) -> bool:
+        return self.__dict__[code_type] == code
         
-    def verify_email(self):
-        self.is_email_verified = True
-        self.save()
+    def verify_email(self, code: str) -> bool:
+        if self.verify_auth_code('verification_code', code):
+            self.is_email_verified = True; self.save()
+            return True
+        return False
     
     def save(self, *args, **kwargs):
         if not self.otp:
