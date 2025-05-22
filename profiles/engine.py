@@ -2,6 +2,9 @@ import re
 from . import models
 
 
+"""
+Handles User Creation
+"""
 class UserHandler:
     NAME_REGEX = r"^[A-Za-z]+(?: [A-Za-z]+)+$"
     EMAIL_REGEX = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
@@ -89,7 +92,11 @@ class UserHandler:
             print('User already exists.')
         else: print('errors:', self.error_messages)
         
-
+        
+        
+"""
+Handles User profile Deliveries, Creations and Updates
+"""
 class ProfileEngine:
     POP_KEY = '_state'
     
@@ -97,22 +104,23 @@ class ProfileEngine:
         self.user = user      
     
     @property
-    def primary_data(self) -> dict:
+    def primary(self) -> dict:
         return dict(
             id=self.user.id,
             name=self.user.get_full_name(),
+            nickname=self.user.nickname.name,
             email=self.user.email
         )
     
     @property
-    def birth_date_data(self) -> dict:
+    def birthdate(self) -> dict:
         return dict(
             user_id=self.user.id,
             date=self.user.birth_date.date
         )
     
     @property
-    def pics_data(self) -> dict:
+    def pics(self) -> dict:
         return dict(
             user_id=self.user.id,
             profile_pic_url=self.user.pics.profile_pic_url,
@@ -120,7 +128,7 @@ class ProfileEngine:
         )
     
     @property
-    def address_data(self) -> dict:
+    def address(self) -> dict:
         country = city = str()
         if self.user.address.city is not None:
             city = self.user.address.city.name
@@ -134,14 +142,17 @@ class ProfileEngine:
         )
     
     @property
-    def detailed_profile(self) -> dict:
+    def details(self) -> dict:
         return dict(
             id=self.user.id,
-            primary=self.primary_data,
-            pics=self.pics_data,
-            birth_date=self.birth_date_data,
-            address=self.address_data
+            primary=self.primary,
+            pics=self.pics,
+            birth_date=self.birthdate,
+            address=self.address
         )
+    
+    def update_primary(self, **kwargs) -> dict:
+        pass
     
     def pretty_print(self) -> None:
         import json

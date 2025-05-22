@@ -7,5 +7,6 @@ admin.site.register([
     models.BirthDate,
     models.Address,
     models.AuthCode,
-    models.Pic
+    models.Pic,
+    models.Nickname
 ])

@@ -30,6 +30,11 @@ class City(models.Model):
         return self.__str__() 
 
 
+class Nickname(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=20, default='')
+    
+
 class Pic(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='pics')
     profile_pic_url = models.TextField(default='')

@@ -34,6 +34,13 @@ def add_auth_code(instance: User, created: bool, *args, **kwargs) -> None:
 
 
 @receiver(post_save, sender=User)
+def add_nickname(instance: User, created: bool, *args, **kwargs) -> None:
+    user = instance
+    if created:
+        profile_models.Nickname.objects.create(user=user)
+
+
+@receiver(post_save, sender=User)
 def add_pics(instance: User, created: bool, *args, **kwargs) -> None:
     user = instance
     if created:
