@@ -92,12 +92,18 @@ class AuthCode(models.Model):
         self.save()
     
     def send_otp(self):
-        self.change_otp()
-        # self.send_code('OTP')
+        try:
+            self.change_otp()
+            # self.send_code('OTP')
+            return True
+        except: return False
     
     def send_verification_code(self):
-        self.change_verification_code()
-        # self.send_code('verification code')
+        try:
+            self.change_verification_code()
+            # self.send_code('verification code')
+            return True
+        except: return False
     
     def verify_auth_code(self, code_type: str, code: str) -> bool:
         print(f'verifying: {self.__dict__[code_type]} == {code}')

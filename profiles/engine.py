@@ -1,17 +1,11 @@
-import re
-from . import models
+import re, json
+from . import models, constants as const, messages as msg
 
 
 """
 Handles User Creation
 """
 class UserHandler:
-    NAME_REGEX = r"^[A-Za-z]+(?: [A-Za-z]+)+$"
-    EMAIL_REGEX = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
-    NAME_MESSAGE = 'Name should have at least two parts, can only contain and start with alphabets (A-Z & a-z) separated by spaces.'
-    DUPLICATE_EMAIL_MESSAGE = 'Email already exists.'
-    INVALID_EMAIL_MESSAGE = 'Invalid email syntax.'
-    PASSWORD_MESSAGE = 'Password must contain at least 8 charcaters.'
 
     def __init__(self, name: str, email: str, password: str, is_superuser: bool=False) -> None:
         self.name = name
@@ -20,30 +14,50 @@ class UserHandler:
         self.is_superuser = is_superuser
         self.error_messages = list()
     
-    def clean_name(self) -> str:
-        name = ' '.join([part.strip() for part in self.name.split()])
+    @classmethod
+    def clean_name(self, name=None) -> str:
+        if name is None: name = self.name
+        name = ' '.join([part.strip() for part in name.split()])
         name = name.lower().title()
-        self.name = name
-        return self.name
+        return name
     
-    def get_names(self) -> tuple[str, str]:
-        return self.name.split()[0], ' '.join(self.name.split()[1:])
+    @classmethod
+    def get_names(self, name=None) -> tuple[str, str]:
+        if name is None: name = self.name
+        name = self.clean_name(name) 
+        return name.split()[0], ' '.join(name.split()[1:])
     
-    def validate_name(self) -> bool: 
-        is_valid = re.match(self.NAME_REGEX, self.name)
-        if not is_valid: self.error_messages.append(self.NAME_MESSAGE)
+    @classmethod
+    def validate_name(self, name=None) -> bool:
+        if name is None: name = self.name 
+        is_valid = re.match(const.NAME_REGEX, name)
+        try:
+            if not is_valid: self.error_messages.append(msg.INVALID_NAME)
+        except: pass
+        return is_valid
+    
+    @classmethod
+    def validate_nickname(self, nickname=str) -> bool: 
+        is_valid = re.match(const.NICKNAME_REGEX, nickname)
+        try:
+            if not is_valid: self.error_messages.append(msg.INVALID_NICKNAME)
+        except: pass
         return is_valid
         
     def validate_email(self) -> bool:
         is_unique = not models.User.objects.filter(email=self.email).exists()
-        is_valid = re.match(self.EMAIL_REGEX, self.email)
-        if not is_unique: self.error_messages.append(self.DUPLICATE_EMAIL_MESSAGE)
-        if not is_valid: self.error_messages.append(self.INVALID_EMAIL_MESSAGE)
+        is_valid = re.match(const.EMAIL_REGEX, self.email)
+        try:
+            if not is_unique: self.error_messages.append(msg.DUPLICATE_EMAIL_MESSAGE)
+            if not is_valid: self.error_messages.append(msg.INVALID_EMAIL_MESSAGE)
+        except: pass
         return is_unique and is_valid
     
     def validate_password(self) -> bool:
         is_valid = self.password.__len__() >= 8
-        if not is_valid: self.error_messages.append(self.PASSWORD_MESSAGE)
+        try:
+            if not is_valid: self.error_messages.append(msg.PASSWORD_MESSAGE)
+        except: pass
         return is_valid
     
     def validate_data(self) -> bool:
@@ -81,7 +95,8 @@ class UserHandler:
             )
     
     def setup_user(self) -> models.User:
-        if self.validate_data():
+        is_validated = self.validate_data()
+        if is_validated:
             data = self.prepare_data()
             if not models.User.objects.filter(**data).exists():
                 user = models.User(**data); user.save()
@@ -89,7 +104,7 @@ class UserHandler:
                 print('Created user.')
                 print(user.__dict__)
                 # user.codes.send_verification_code()
-                return user, dict(user_id=user.id)
+                return user
             print('User already exists.')
         else: print('errors:', self.error_messages)
         
@@ -99,10 +114,10 @@ class UserHandler:
 Handles User profile Deliveries, Creations and Updates
 """
 class ProfileEngine:
-    POP_KEY = '_state'
     
     def __init__(self, user: models.User) -> None:
-        self.user = user      
+        self.user = user
+        self.error_messages = list()      
     
     @property
     def primary(self) -> dict:
@@ -157,10 +172,37 @@ class ProfileEngine:
             birth_date=self.birthdate,
             address=self.address
         )
+        
+    @property
+    def errors(self) -> list:
+        return list(set(self.error_messages))
     
-    def update_primary(self, **kwargs) -> dict:
-        pass
+    def validate_name(self, name: str) -> bool:
+        is_valid = UserHandler.validate_name(name)
+        if not is_valid: self.error_messages.append(msg.INVALID_NAME)
+        return is_valid
+    
+    def validate_nickname(self, nickname: str) -> bool:
+        is_valid = UserHandler.validate_nickname(nickname)
+        if not is_valid: self.error_messages.append(msg.INVALID_NICKNAME)
+        return is_valid
+    
+    def validate_primary(self, name: str, nickname: str) -> bool:
+        a, b = self.validate_name(name), self.validate_nickname(nickname)
+        return a and b
+    
+    def update_name(self, name: str) -> None:
+        self.user.first_name, self.user.last_name = UserHandler.get_names(name)
+        self.user.save()
+    
+    def update_nickname(self, nickname: str) -> None:
+        self.user.nickname.name = nickname
+        self.user.nickname.save()
+    
+    def update_primary(self, name: str, nickname: str) -> dict | None:
+        if self.validate_primary(name, nickname):
+            self.update_name(name); self.update_nickname(nickname)
+            return self.primary
     
     def pretty_print(self) -> None:
-        import json
         print(json.dumps(self.detailed_profile, indent=4))
