@@ -1,4 +1,4 @@
-import re, json
+import re, json, datetime
 from . import models, constants as const, messages as msg
 
 
@@ -132,7 +132,7 @@ class ProfileEngine:
     def birthdate(self) -> dict:
         return dict(
             user_id=self.user.id,
-            date=self.user.birth_date.date
+            date=self.user.birth_date.timestamp_ms
         )
     
     @property
@@ -167,6 +167,7 @@ class ProfileEngine:
     def details(self) -> dict:
         return dict(
             id=self.user.id,
+            has_addr_data=self.has_addr_data,
             primary=self.primary,
             pics=self.pics,
             birth_date=self.birthdate,
@@ -176,6 +177,20 @@ class ProfileEngine:
     @property
     def errors(self) -> list:
         return list(set(self.error_messages))
+    
+    def validate_country(self, country_name: str) -> bool:
+        is_valid = models.Country.objects.filter(name=country_name).exists()
+        if not is_valid: self.error_messages.append(msg.NO_COUNTRY)
+        return is_valid
+    
+    def validate_city(self, country_name: str, city_name: str) -> bool:
+        is_valid = models.City.objects.filter(country__name=country_name, name=city_name).exists()
+        if not is_valid: self.error_messages.append(msg.NO_CITY)
+        return is_valid
+        
+    def validate_country_and_city(self, country_name: str, city_name: str) -> bool:
+        a,b = self.validate_country(country_name), self.validate_city(country_name, city_name)
+        return a and b
     
     def validate_name(self, name: str) -> bool:
         is_valid = UserHandler.validate_name(name)
@@ -199,10 +214,28 @@ class ProfileEngine:
         self.user.nickname.name = nickname
         self.user.nickname.save()
     
-    def update_primary(self, name: str, nickname: str) -> dict | None:
+    def update_primary(self, name: str, nickname: str, date: int) -> dict | None:
         if self.validate_primary(name, nickname):
-            self.update_name(name); self.update_nickname(nickname)
+            self.update_name(name)
+            self.update_nickname(nickname)
+            self.update_birthdate
             return self.primary
+    
+    def update_birthdate(self, date: int):
+        birthdate = datetime.datetime.fromtimestamp(int(date)/1000).date()
+        self.user.birth_date.date = birthdate
+        self.user.birth_date.save()
+        return self.birthdate
+    
+    def update_address(
+        self, country: str, city: str, post_code: str, details: str) -> dict | None:
+        if self.validate_country_and_city(country, city):
+            city = models.City.objects.get(country__name=country, name=city)
+            self.user.address.city = city
+            self.user.address.post_code = post_code
+            self.user.address.details = details
+            self.user.address.save()
+            return self.address
     
     def pretty_print(self) -> None:
         print(json.dumps(self.detailed_profile, indent=4))

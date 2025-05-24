@@ -12,4 +12,6 @@ urlpatterns = [
     path('user/verify-otp', views.OTPVerificationAPI.as_view()),
     path('user/change-password', views.PwdChangeAPI.as_view()),
     path('user/request-otp', views.OTPRequestAPI.as_view()),
+    path('countries', views.CountriesAPI.as_view()),
+    path('cities', views.citiesAPI.as_view()),
 ]

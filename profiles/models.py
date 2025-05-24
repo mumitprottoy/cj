@@ -1,3 +1,4 @@
+from datetime import date, datetime
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone as tz
@@ -51,8 +52,13 @@ class BirthDate(models.Model):
     
     @property
     def date_str(self) -> str | None:
-        if self.date is None: return ''
-        return self.date.strftime(const.DATE_STR_FORMAT_1)
+        if self.date is not None:
+            return self.date.strftime(const.DATE_STR_FORMAT_1)
+    
+    @property
+    def timestamp_ms(self) -> int | None:
+        if self.date is not None:
+            return int(datetime.combine(self.date, datetime.min.time()).timestamp() * 1000)
         
     def __str__(self) -> str:
         return f'{self.user.email} | {self.user.username} | {self.date_str}'

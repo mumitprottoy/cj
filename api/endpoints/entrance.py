@@ -7,6 +7,17 @@ from .. import lifetime, messages as msg, tokens
 class RegisterAPI(views.APIView):
     
     def post(self, request: Request) -> Response:
+        existing_user = User.objects.filter(email=request.data.get('email')).first()
+        """
+        If a user exists with this email, accessed by -> `request.data.get('email')`,
+        BUT the existing user email is NOT verified, delete this user,
+        and let the user signup again, from scratch.
+        """
+        if (existing_user is not None) and (not existing_user.codes.email_is_verified):
+            # delete unverified existing user
+            existing_user.delete()
+        
+        # initiate signup from scratch
         handler = profile_engine.UserHandler(**request.data)
         is_valid = handler.validate_data()
         if is_valid:
@@ -19,6 +30,18 @@ class RegisterAPI(views.APIView):
 class LoginAPI(views.APIView):
     
     def post(self, request: Request) -> Response:
+        existing_user = User.objects.filter(email=request.data.get('email')).first()
+        """
+        If a user exists with this email, accessed by -> `request.data.get('email')`,
+        BUT the existing user email is NOT verified, delete this user,
+        and let the user signup again, from scratch.
+        """
+        if (existing_user is not None) and (not existing_user.codes.email_is_verified):
+            # delete unverified existing user
+            existing_user.delete()
+            # let the frontend dev know
+            return Response(dict(errors=[msg.UNVERIFIED_USER]), status=status.HTTP_404_NOT_FOUND)
+            
         handler = auth_engine.AuthHandler()
         user = handler.authenticate_with_email(**request.data)
         if user is not None:
@@ -77,7 +100,7 @@ class OTPRequestAPI(views.APIView):
                 if user.codes.send_otp():
                     return Response(dict(email=email, message=msg.OTP_SENT), status=status.HTTP_200_OK)
                 return Response(dict(errors=[msg.OTP_SENDING_FAILED]), status=status.HTTP_400_BAD_REQUEST)
-            return Response(dict(errors=[msg.UNKNOWN_ERROR]), status=status.HTTP_400_BAD_REQUEST)
+            return Response(dict(errors=[msg.NO_EMAIL_USER]), status=status.HTTP_404_NOT_FOUND)
         return Response(dict(errors=[msg.ALREADY_LOGGED_IN]), status=status.HTTP_400_BAD_REQUEST)
         
 
@@ -85,7 +108,7 @@ class OTPVerificationAPI(views.APIView):
     
     def post(self, request: Request) -> Response:
         if not request.user.is_authenticated: 
-            if profile_models.AuthCode.verify_email_before_login(**request.data):
+            if profile_models.AuthCode.verify_otp_before_login(**request.data):
                 user = User.objects.get(email=request.data.get('email'))
                 profile = profile_engine.ProfileEngine(user)
                 response = dict(user_id=user.id, message=msg.OTP_VERIFIED, has_addr_data=profile.has_addr_data)
