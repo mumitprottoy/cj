@@ -1,7 +1,0 @@
-INVALID_NAME = 'Name should have at least two parts, can only contain and start with alphabets (A-Z & a-z) separated by spaces.'
-INVALID_NICKNAME = 'Nickname must be one word. No spaces or special characters and contains max 20 characters'
-DUPLICATE_EMAIL_MESSAGE = 'Email already exists.'
-INVALID_EMAIL_MESSAGE = 'Invalid email syntax.'
-PASSWORD_MESSAGE = 'Password must contain at least 8 charcaters.'
-NO_COUNTRY = 'Invalid country name. Please choose from the options.'
-NO_CITY = 'Invalid city name. Please choose from the options.'
