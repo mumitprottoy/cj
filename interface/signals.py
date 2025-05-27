@@ -1,15 +1,8 @@
 import random
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
-from profiles import models as profile_models, engine
-
-
-# @receiver(pre_save, sender=User)
-# def add_unique_username(instance: User, *args, **kwargs) -> None:
-#     user = instance
-#     user.username = engine.UserHandler.create_unique_username(
-#         f"{user.first_name} {user.last_name}")
+from profiles import models as profile_models
 
 
 @receiver(post_save, sender=User)

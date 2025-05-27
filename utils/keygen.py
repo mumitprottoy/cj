@@ -30,5 +30,5 @@ class KeyGen:
         for i in range(key_len)
         ])
 
-    def timestamped_alphanumeric_id(self, head_len=5):
+    def timestamped_alphanumeric_id(self, head_len=10):
         return self.alphanumeric_key(head_len) + self.datetime_key()

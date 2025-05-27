@@ -29,11 +29,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     
-    # internak
+    # internal
     'profiles',
-    'entrance',
     'interface',
     'api',
+    'posts',
     
     # extermnal
     'allauth',
