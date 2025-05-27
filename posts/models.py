@@ -47,6 +47,7 @@ class PostPoll(models.Model):
         max_length=50, unique=True, default=kg.KeyGen().timestamped_alphanumeric_id)
     metadata = models.OneToOneField(
         PostMetaData, on_delete=models.CASCADE, related_name='poll')
+    title = models.TextField(default='')
     
     @property
     def total_vote(self) -> int:
@@ -67,11 +68,12 @@ class PostPoll(models.Model):
                     perc = perc
                 )
             ))    
-        return poll_analysis
-
-    @property
-    def sorted_analysis(self) -> list[dict]:
-        return sorted(self.analysis, key=lambda x: x['perc'], reverse=True)
+        return dict(
+            id = self.id,
+            uid = self.uid,
+            title = self.title,
+            options = sorted(poll_analysis, key=lambda x: x['perc'], reverse=True)
+        )
 
 
 class PollOption(models.Model):
